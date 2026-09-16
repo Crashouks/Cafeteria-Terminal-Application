@@ -1,17 +1,22 @@
 import java.util.Locale;
 import java.util.Scanner;
 
-/**
- * ЛР1. Кав'ярня: приймання та облік замовлень.
- * Програма приймає ДВА замовлення за зміну (введення характеристик,
- * розрахунок вартості кожного), а потім формує ОБЛІК зміни:
- * загальну виручку, середній чек, найбільший чек і виконання плану.
- */
 public class Main {
+
+    static class Order {
+        String customerName;
+        String drinkName;
+        int volumeMl;
+        String sizeLabel;
+        double subtotal;
+        double totalDiscount;
+        double discountAmount;
+        double total;
+    }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        scanner.useLocale(Locale.US); // крапка як десятковий роздільник для double
+        scanner.useLocale(Locale.US);
 
         System.out.println("=== Кав'ярня \"Ранкова Хвиля\" — приймання та облік замовлень ===");
 
@@ -20,157 +25,81 @@ public class Main {
 
         System.out.print("Плановий обсяг виручки за зміну, грн: ");
         double revenuePlan = scanner.nextDouble();
-        scanner.nextLine(); // прибрати символ переносу рядка, що лишився після nextDouble()
-
-        // ==================== ЗАМОВЛЕННЯ №1 ====================
-        System.out.println();
-        System.out.println("--- Замовлення №1 ---");
-
-        System.out.print("Ім'я клієнта: ");
-        String customerName1 = scanner.nextLine();
-
-        System.out.print("Назва напою: ");
-        String drinkName1 = scanner.nextLine();
-
-        System.out.print("Об'єм порції, мл: ");
-        int volumeMl1 = scanner.nextInt();
-
-        System.out.print("Ціна за порцію, грн: ");
-        double pricePerUnit1 = scanner.nextDouble();
-
-        System.out.print("Кількість порцій: ");
-        int quantity1 = scanner.nextInt();
-
-        System.out.print("Знижка клієнта, %: ");
-        double discountPercent1 = scanner.nextDouble();
         scanner.nextLine();
 
-        String sizeLabel1;
-        if (volumeMl1 >= 400) {
-            sizeLabel1 = "Великий (L)";
-        } else if (volumeMl1 >= 300) {
-            sizeLabel1 = "Середній (M)";
-        } else {
-            sizeLabel1 = "Малий (S)";
-        }
+        Order order1 = readOrder(scanner, 1);
+        Order order2 = readOrder(scanner, 2);
 
-        double loyaltyBonus1;
-        if (quantity1 >= 3) {
-            loyaltyBonus1 = 5.0;
-        } else {
-            loyaltyBonus1 = 0.0;
-        }
+        printReceipt(1, order1);
+        printReceipt(2, order2);
 
-        double totalDiscount1 = discountPercent1 + loyaltyBonus1;
-        if (totalDiscount1 > 100.0) {
-            totalDiscount1 = 100.0;
-        }
-
-        double subtotal1 = pricePerUnit1 * quantity1;
-        double discountAmount1 = subtotal1 * totalDiscount1 / 100.0;
-        double total1 = subtotal1 - discountAmount1;
-
-        // ==================== ЗАМОВЛЕННЯ №2 ====================
-        System.out.println();
-        System.out.println("--- Замовлення №2 ---");
-
-        System.out.print("Ім'я клієнта: ");
-        String customerName2 = scanner.nextLine();
-
-        System.out.print("Назва напою: ");
-        String drinkName2 = scanner.nextLine();
-
-        System.out.print("Об'єм порції, мл: ");
-        int volumeMl2 = scanner.nextInt();
-
-        System.out.print("Ціна за порцію, грн: ");
-        double pricePerUnit2 = scanner.nextDouble();
-
-        System.out.print("Кількість порцій: ");
-        int quantity2 = scanner.nextInt();
-
-        System.out.print("Знижка клієнта, %: ");
-        double discountPercent2 = scanner.nextDouble();
-        scanner.nextLine();
-
-        String sizeLabel2;
-        if (volumeMl2 >= 400) {
-            sizeLabel2 = "Великий (L)";
-        } else if (volumeMl2 >= 300) {
-            sizeLabel2 = "Середній (M)";
-        } else {
-            sizeLabel2 = "Малий (S)";
-        }
-
-        double loyaltyBonus2;
-        if (quantity2 >= 3) {
-            loyaltyBonus2 = 5.0;
-        } else {
-            loyaltyBonus2 = 0.0;
-        }
-
-        double totalDiscount2 = discountPercent2 + loyaltyBonus2;
-        if (totalDiscount2 > 100.0) {
-            totalDiscount2 = 100.0;
-        }
-
-        double subtotal2 = pricePerUnit2 * quantity2;
-        double discountAmount2 = subtotal2 * totalDiscount2 / 100.0;
-        double total2 = subtotal2 - discountAmount2;
-
-        // ==================== ЧЕКИ ЗАМОВЛЕНЬ ====================
-        System.out.println();
-        System.out.println("================ ЧЕК №1 ================");
-        System.out.printf("Клієнт:            %s%n", customerName1);
-        System.out.printf("Напій:             %s (%s, %d мл)%n", drinkName1, sizeLabel1, volumeMl1);
-        System.out.printf("Сума без знижки:   %.2f грн%n", subtotal1);
-        System.out.printf("Знижка:            %.2f %% (%.2f грн)%n", totalDiscount1, discountAmount1);
-        System.out.printf("До сплати:         %.2f грн%n", total1);
-        System.out.println("==========================================");
-
-        System.out.println();
-        System.out.println("================ ЧЕК №2 ================");
-        System.out.printf("Клієнт:            %s%n", customerName2);
-        System.out.printf("Напій:             %s (%s, %d мл)%n", drinkName2, sizeLabel2, volumeMl2);
-        System.out.printf("Сума без знижки:   %.2f грн%n", subtotal2);
-        System.out.printf("Знижка:            %.2f %% (%.2f грн)%n", totalDiscount2, discountAmount2);
-        System.out.printf("До сплати:         %.2f грн%n", total2);
-        System.out.println("==========================================");
-
-        // ==================== ОБЛІК ЗМІНИ ====================
         int orderCount = 2;
-        double totalRevenue = total1 + total2;
+        double totalRevenue = order1.total + order2.total;
         double averageCheck = totalRevenue / orderCount;
-
-        double biggestCheck;
-        String biggestCustomer;
-        if (total1 >= total2) {
-            biggestCheck = total1;
-            biggestCustomer = customerName1;
-        } else {
-            biggestCheck = total2;
-            biggestCustomer = customerName2;
-        }
-
+        Order biggest = order1.total >= order2.total ? order1 : order2;
         double planDiff = totalRevenue - revenuePlan;
-        String planStatus;
-        if (planDiff >= 0) {
-            planStatus = "ВИКОНАНО";
-        } else {
-            planStatus = "НЕ ВИКОНАНО";
-        }
+        String planStatus = planDiff >= 0 ? "ВИКОНАНО" : "НЕ ВИКОНАНО";
 
         System.out.println();
         System.out.println("============ ОБЛІК ЗМІНИ (" + shiftDate + ") ============");
         System.out.printf("Кількість замовлень:      %d%n", orderCount);
         System.out.printf("Загальна виручка:         %.2f грн%n", totalRevenue);
         System.out.printf("Середній чек:             %.2f грн%n", averageCheck);
-        System.out.printf("Найбільший чек:           %.2f грн (клієнт: %s)%n", biggestCheck, biggestCustomer);
+        System.out.printf("Найбільший чек:           %.2f грн (клієнт: %s)%n", biggest.total, biggest.customerName);
         System.out.printf("План на зміну:            %.2f грн%n", revenuePlan);
         System.out.printf("Відхилення від плану:     %.2f грн%n", planDiff);
         System.out.printf("Статус плану:             %s%n", planStatus);
         System.out.println("=======================================================");
 
         scanner.close();
+    }
+
+    static Order readOrder(Scanner scanner, int index) {
+        System.out.println();
+        System.out.println("--- Замовлення №" + index + " ---");
+
+        System.out.print("Ім'я клієнта: ");
+        String customerName = scanner.nextLine();
+
+        System.out.print("Назва напою: ");
+        String drinkName = scanner.nextLine();
+
+        System.out.print("Об'єм порції, мл: ");
+        int volumeMl = scanner.nextInt();
+
+        System.out.print("Ціна за порцію, грн: ");
+        double pricePerUnit = scanner.nextDouble();
+
+        System.out.print("Кількість порцій: ");
+        int quantity = scanner.nextInt();
+
+        System.out.print("Знижка клієнта, %: ");
+        double discountPercent = scanner.nextDouble();
+        scanner.nextLine();
+
+        Order order = new Order();
+        order.customerName = customerName;
+        order.drinkName = drinkName;
+        order.volumeMl = volumeMl;
+        order.sizeLabel = volumeMl >= 400 ? "Великий (L)" : volumeMl >= 300 ? "Середній (M)" : "Малий (S)";
+
+        double loyaltyBonus = quantity >= 3 ? 5.0 : 0.0;
+        order.totalDiscount = Math.min(discountPercent + loyaltyBonus, 100.0);
+        order.subtotal = pricePerUnit * quantity;
+        order.discountAmount = order.subtotal * order.totalDiscount / 100.0;
+        order.total = order.subtotal - order.discountAmount;
+
+        return order;
+    }
+
+    static void printReceipt(int index, Order order) {
+        System.out.println();
+        System.out.println("================ ЧЕК №" + index + " ================");
+        System.out.printf("Клієнт:            %s%n", order.customerName);
+        System.out.printf("Напій:             %s (%s, %d мл)%n", order.drinkName, order.sizeLabel, order.volumeMl);
+        System.out.printf("Сума без знижки:   %.2f грн%n", order.subtotal);
+        System.out.printf("Знижка:            %.2f %% (%.2f грн)%n", order.totalDiscount, order.discountAmount);
+        System.out.printf("До сплати:         %.2f грн%n", order.total);
+        System.out.println("==========================================");
     }
 }
