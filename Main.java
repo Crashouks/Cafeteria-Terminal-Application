@@ -3,103 +3,132 @@ import java.util.Scanner;
 
 public class Main {
 
-    static class Order {
-        String customerName;
-        String itemName;
-        int volumeMl;
-        String sizeLabel;
-        double subtotal;
-        double totalDiscount;
-        double discountAmount;
-        double total;
+    static class MenuItem {
+        String name;
+        String category;
+        double price;
+        int calories;
+
+        MenuItem(String name, String category, double price, int calories) {
+            this.name = name;
+            this.category = category;
+            this.price = price;
+            this.calories = calories;
+        }
+
+        @Override
+        public String toString() {
+            return String.format(Locale.US, "%-20s | %-15s | %8.2f грн | %4d ккал", name, category, price, calories);
+        }
     }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        scanner.useLocale(Locale.US);
 
-        System.out.println("=== Кафетерій \"Ранкова Хвиля\" — приймання та облік замовлень ===");
+        System.out.println("=== Кафетерій \"Ранкова Хвиля\" — каталог меню ===");
 
-        System.out.print("Дата зміни (напр., 10.09.2026): ");
-        String shiftDate = scanner.nextLine();
+        System.out.print("Введіть кількість позицій меню: ");
+        int count = Integer.parseInt(scanner.nextLine().trim());
 
-        System.out.print("Плановий обсяг виручки за зміну, грн: ");
-        double revenuePlan = scanner.nextDouble();
-        scanner.nextLine();
+        MenuItem[] menu = new MenuItem[count];
 
-        Order order1 = readOrder(scanner, 1);
-        Order order2 = readOrder(scanner, 2);
+        for (int i = 0; i < count; i++) {
+            System.out.println();
+            System.out.println("--- Позиція меню №" + (i + 1) + " ---");
 
-        printReceipt(1, order1);
-        printReceipt(2, order2);
+            System.out.print("Назва страви/напою: ");
+            String name = scanner.nextLine();
 
-        int orderCount = 2;
-        double totalRevenue = order1.total + order2.total;
-        double averageCheck = totalRevenue / orderCount;
-        Order biggest = order1.total >= order2.total ? order1 : order2;
-        double planDiff = totalRevenue - revenuePlan;
-        String planStatus = planDiff >= 0 ? "ВИКОНАНО" : "НЕ ВИКОНАНО";
+            System.out.print("Категорія: ");
+            String category = scanner.nextLine();
+
+            System.out.print("Ціна, грн: ");
+            double price = Double.parseDouble(scanner.nextLine().trim().replace(",", "."));
+
+            System.out.print("Калорійність, ккал: ");
+            int calories = Integer.parseInt(scanner.nextLine().trim());
+
+            menu[i] = new MenuItem(name, category, price, calories);
+        }
 
         System.out.println();
-        System.out.println("============ ОБЛІК ЗМІНИ (" + shiftDate + ") ============");
-        System.out.printf("Кількість замовлень:      %d%n", orderCount);
-        System.out.printf("Загальна виручка:         %.2f грн%n", totalRevenue);
-        System.out.printf("Середній чек:             %.2f грн%n", averageCheck);
-        System.out.printf("Найбільший чек:           %.2f грн (клієнт: %s)%n", biggest.total, biggest.customerName);
-        System.out.printf("План на зміну:            %.2f грн%n", revenuePlan);
-        System.out.printf("Відхилення від плану:     %.2f грн%n", planDiff);
-        System.out.printf("Статус плану:             %s%n", planStatus);
-        System.out.println("=======================================================");
+        System.out.println("=== Меню (введені дані) ===");
+        for (MenuItem item : menu) {
+            System.out.println(item);
+        }
+
+        System.out.println();
+        System.out.print("Введіть цінову межу для підрахунку дешевих позицій, грн: ");
+        double priceLimit = Double.parseDouble(scanner.nextLine().trim().replace(",", "."));
+
+        int cheapCount = 0;
+        for (MenuItem item : menu) {
+            if (item.price < priceLimit) {
+                cheapCount++;
+            }
+        }
+        System.out.printf(Locale.US, "Кількість позицій дешевших за %.2f грн: %d%n", priceLimit, cheapCount);
+
+        System.out.println();
+        System.out.println("=== Меню до сортування за ціною ===");
+        for (MenuItem item : menu) {
+            System.out.println(item);
+        }
+
+        for (int i = 0; i < menu.length - 1; i++) {
+            for (int j = 0; j < menu.length - 1 - i; j++) {
+                if (menu[j].price > menu[j + 1].price) {
+                    MenuItem temp = menu[j];
+                    menu[j] = menu[j + 1];
+                    menu[j + 1] = temp;
+                }
+            }
+        }
+
+        System.out.println();
+        System.out.println("=== Меню після сортування за ціною (зростання) ===");
+        for (MenuItem item : menu) {
+            System.out.println(item);
+        }
+
+        System.out.println();
+        System.out.println("=== Пошук позиції меню за зразком ===");
+
+        System.out.print("Назва страви/напою: ");
+        String searchName = scanner.nextLine();
+
+        System.out.print("Категорія: ");
+        String searchCategory = scanner.nextLine();
+
+        System.out.print("Ціна, грн: ");
+        double searchPrice = Double.parseDouble(scanner.nextLine().trim().replace(",", "."));
+
+        System.out.print("Калорійність, ккал: ");
+        int searchCalories = Integer.parseInt(scanner.nextLine().trim());
+
+        MenuItem sample = new MenuItem(searchName, searchCategory, searchPrice, searchCalories);
+        int foundIndex = linearSearch(menu, sample);
+
+        if (foundIndex >= 0) {
+            System.out.println("Знайдено на позиції №" + (foundIndex + 1) + ": " + menu[foundIndex]);
+        } else {
+            System.out.println("Позицію з такими даними в меню не знайдено.");
+        }
 
         scanner.close();
     }
 
-    static Order readOrder(Scanner scanner, int index) {
-        System.out.println();
-        System.out.println("--- Замовлення №" + index + " ---");
-
-        System.out.print("Ім'я клієнта: ");
-        String customerName = scanner.nextLine();
-
-        System.out.print("Назва страви/напою: ");
-        String itemName = scanner.nextLine();
-
-        System.out.print("Об'єм/вага порції, мл/г: ");
-        int volumeMl = scanner.nextInt();
-
-        System.out.print("Ціна за порцію, грн: ");
-        double pricePerUnit = scanner.nextDouble();
-
-        System.out.print("Кількість порцій: ");
-        int quantity = scanner.nextInt();
-
-        System.out.print("Знижка клієнта, %: ");
-        double discountPercent = scanner.nextDouble();
-        scanner.nextLine();
-
-        Order order = new Order();
-        order.customerName = customerName;
-        order.itemName = itemName;
-        order.volumeMl = volumeMl;
-        order.sizeLabel = volumeMl >= 400 ? "Велика (L)" : volumeMl >= 300 ? "Середня (M)" : "Мала (S)";
-
-        double loyaltyBonus = quantity >= 3 ? 5.0 : 0.0;
-        order.totalDiscount = Math.min(discountPercent + loyaltyBonus, 100.0);
-        order.subtotal = pricePerUnit * quantity;
-        order.discountAmount = order.subtotal * order.totalDiscount / 100.0;
-        order.total = order.subtotal - order.discountAmount;
-
-        return order;
-    }
-
-    static void printReceipt(int index, Order order) {
-        System.out.println();
-        System.out.println("================ ЧЕК №" + index + " ================");
-        System.out.printf("Клієнт:            %s%n", order.customerName);
-        System.out.printf("Страва/напій:      %s (%s, %d мл)%n", order.itemName, order.sizeLabel, order.volumeMl);
-        System.out.printf("Сума без знижки:   %.2f грн%n", order.subtotal);
-        System.out.printf("Знижка:            %.2f %% (%.2f грн)%n", order.totalDiscount, order.discountAmount);
-        System.out.printf("До сплати:         %.2f грн%n", order.total);
-        System.out.println("==========================================");
+    static int linearSearch(MenuItem[] menu, MenuItem sample) {
+        for (int i = 0; i < menu.length; i++) {
+            MenuItem current = menu[i];
+            boolean same = current.name.equals(sample.name)
+                    && current.category.equals(sample.category)
+                    && current.price == sample.price
+                    && current.calories == sample.calories;
+            if (same) {
+                return i;
+            }
+        }
+        return -1;
     }
 }
