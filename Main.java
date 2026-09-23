@@ -5,7 +5,7 @@ public class Main {
 
     static class Order {
         String customerName;
-        String drinkName;
+        String itemName;
         int volumeMl;
         String sizeLabel;
         double subtotal;
@@ -18,7 +18,7 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         scanner.useLocale(Locale.US);
 
-        System.out.println("=== Кав'ярня \"Ранкова Хвиля\" — приймання та облік замовлень ===");
+        System.out.println("=== Кафетерій \"Ранкова Хвиля\" — приймання та облік замовлень ===");
 
         System.out.print("Дата зміни (напр., 10.09.2026): ");
         String shiftDate = scanner.nextLine();
@@ -61,10 +61,10 @@ public class Main {
         System.out.print("Ім'я клієнта: ");
         String customerName = scanner.nextLine();
 
-        System.out.print("Назва напою: ");
-        String drinkName = scanner.nextLine();
+        System.out.print("Назва страви/напою: ");
+        String itemName = scanner.nextLine();
 
-        System.out.print("Об'єм порції, мл: ");
+        System.out.print("Об'єм/вага порції, мл/г: ");
         int volumeMl = scanner.nextInt();
 
         System.out.print("Ціна за порцію, грн: ");
@@ -79,9 +79,9 @@ public class Main {
 
         Order order = new Order();
         order.customerName = customerName;
-        order.drinkName = drinkName;
+        order.itemName = itemName;
         order.volumeMl = volumeMl;
-        order.sizeLabel = volumeMl >= 400 ? "Великий (L)" : volumeMl >= 300 ? "Середній (M)" : "Малий (S)";
+        order.sizeLabel = volumeMl >= 400 ? "Велика (L)" : volumeMl >= 300 ? "Середня (M)" : "Мала (S)";
 
         double loyaltyBonus = quantity >= 3 ? 5.0 : 0.0;
         order.totalDiscount = Math.min(discountPercent + loyaltyBonus, 100.0);
@@ -96,7 +96,7 @@ public class Main {
         System.out.println();
         System.out.println("================ ЧЕК №" + index + " ================");
         System.out.printf("Клієнт:            %s%n", order.customerName);
-        System.out.printf("Напій:             %s (%s, %d мл)%n", order.drinkName, order.sizeLabel, order.volumeMl);
+        System.out.printf("Страва/напій:      %s (%s, %d мл)%n", order.itemName, order.sizeLabel, order.volumeMl);
         System.out.printf("Сума без знижки:   %.2f грн%n", order.subtotal);
         System.out.printf("Знижка:            %.2f %% (%.2f грн)%n", order.totalDiscount, order.discountAmount);
         System.out.printf("До сплати:         %.2f грн%n", order.total);
