@@ -1,4 +1,3 @@
-import java.util.Locale;
 import java.util.Scanner;
 
 public class Main {
@@ -18,59 +17,65 @@ public class Main {
 
         @Override
         public String toString() {
-            return String.format(Locale.US, "%-20s | %-15s | %8.2f грн | %4d ккал", name, category, price, calories);
+            return name + " | " + category + " | " + price + " грн | " + calories + " ккал";
         }
+    }
+
+    static MenuItem readItem(Scanner scanner) {
+        System.out.print("Назва: ");
+        String name = scanner.nextLine();
+        System.out.print("Категорія: ");
+        String category = scanner.nextLine();
+        System.out.print("Ціна: ");
+        double price = Double.parseDouble(scanner.nextLine());
+        System.out.print("Калорійність: ");
+        int calories = Integer.parseInt(scanner.nextLine());
+        return new MenuItem(name, category, price, calories);
+    }
+
+    // Лінійний пошук за цілим об'єктом-зразком
+    static int linearSearch(MenuItem[] menu, MenuItem sample) {
+        for (int i = 0; i < menu.length; i++) {
+            if (menu[i].name.equals(sample.name)
+                    && menu[i].category.equals(sample.category)
+                    && menu[i].price == sample.price
+                    && menu[i].calories == sample.calories) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("=== Кафетерій \"Ранкова Хвиля\" — каталог меню ===");
-
-        System.out.print("Введіть кількість позицій меню: ");
-        int count = Integer.parseInt(scanner.nextLine().trim());
+        System.out.print("Кількість позицій меню: ");
+        int count = Integer.parseInt(scanner.nextLine());
 
         MenuItem[] menu = new MenuItem[count];
-
-        for (int i = 0; i < count; i++) {
-            System.out.println();
-            System.out.println("--- Позиція меню №" + (i + 1) + " ---");
-
-            System.out.print("Назва страви/напою: ");
-            String name = scanner.nextLine();
-
-            System.out.print("Категорія: ");
-            String category = scanner.nextLine();
-
-            System.out.print("Ціна, грн: ");
-            double price = Double.parseDouble(scanner.nextLine().trim().replace(",", "."));
-
-            System.out.print("Калорійність, ккал: ");
-            int calories = Integer.parseInt(scanner.nextLine().trim());
-
-            menu[i] = new MenuItem(name, category, price, calories);
+        for (int i = 0; i < menu.length; i++) {
+            System.out.println("--- Позиція " + (i + 1) + " ---");
+            menu[i] = readItem(scanner);
         }
 
-        System.out.println();
-        System.out.println("=== Меню (введені дані) ===");
+        System.out.println("=== Меню ===");
         for (MenuItem item : menu) {
             System.out.println(item);
         }
 
-        System.out.println();
-        System.out.print("Введіть цінову межу для підрахунку дешевих позицій, грн: ");
-        double priceLimit = Double.parseDouble(scanner.nextLine().trim().replace(",", "."));
-
-        int cheapCount = 0;
+        // Підрахунок елементів за умовою
+        System.out.print("Цінова межа: ");
+        double limit = Double.parseDouble(scanner.nextLine());
+        int cheap = 0;
         for (MenuItem item : menu) {
-            if (item.price < priceLimit) {
-                cheapCount++;
+            if (item.price < limit) {
+                cheap++;
             }
         }
-        System.out.printf(Locale.US, "Кількість позицій дешевших за %.2f грн: %d%n", priceLimit, cheapCount);
+        System.out.println("Позицій дешевших за " + limit + " грн: " + cheap);
 
-        System.out.println();
-        System.out.println("=== Меню до сортування за ціною ===");
+        // Сортування бульбашкою за ціною
+        System.out.println("=== До сортування ===");
         for (MenuItem item : menu) {
             System.out.println(item);
         }
@@ -85,50 +90,19 @@ public class Main {
             }
         }
 
-        System.out.println();
-        System.out.println("=== Меню після сортування за ціною (зростання) ===");
+        System.out.println("=== Після сортування за ціною ===");
         for (MenuItem item : menu) {
             System.out.println(item);
         }
 
-        System.out.println();
-        System.out.println("=== Пошук позиції меню за зразком ===");
-
-        System.out.print("Назва страви/напою: ");
-        String searchName = scanner.nextLine();
-
-        System.out.print("Категорія: ");
-        String searchCategory = scanner.nextLine();
-
-        System.out.print("Ціна, грн: ");
-        double searchPrice = Double.parseDouble(scanner.nextLine().trim().replace(",", "."));
-
-        System.out.print("Калорійність, ккал: ");
-        int searchCalories = Integer.parseInt(scanner.nextLine().trim());
-
-        MenuItem sample = new MenuItem(searchName, searchCategory, searchPrice, searchCalories);
-        int foundIndex = linearSearch(menu, sample);
-
-        if (foundIndex >= 0) {
-            System.out.println("Знайдено на позиції №" + (foundIndex + 1) + ": " + menu[foundIndex]);
+        // Пошук за зразком
+        System.out.println("=== Пошук позиції ===");
+        MenuItem sample = readItem(scanner);
+        int found = linearSearch(menu, sample);
+        if (found >= 0) {
+            System.out.println("Знайдено на позиції " + (found + 1) + ": " + menu[found]);
         } else {
-            System.out.println("Позицію з такими даними в меню не знайдено.");
+            System.out.println("Не знайдено.");
         }
-
-        scanner.close();
-    }
-
-    static int linearSearch(MenuItem[] menu, MenuItem sample) {
-        for (int i = 0; i < menu.length; i++) {
-            MenuItem current = menu[i];
-            boolean same = current.name.equals(sample.name)
-                    && current.category.equals(sample.category)
-                    && current.price == sample.price
-                    && current.calories == sample.calories;
-            if (same) {
-                return i;
-            }
-        }
-        return -1;
     }
 }
