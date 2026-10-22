@@ -1,4 +1,6 @@
-interface DiscountStrategy {
+package com.morningwave.cafe.discount;
+
+public interface DiscountStrategy {
 
     double calculate(double price);
 
@@ -9,9 +11,4 @@ interface DiscountStrategy {
     default double calculateTotal(double price, int quantity) {
         return calculate(price) * quantity;
     }
-}
-
-interface Describable {
-
-    String describe();
 }
