@@ -1,10 +1,13 @@
-# Кафетерій «Ранкова Хвиля» — навчальний Java-проєкт
+# Cafe Menu — «Ранкова Хвиля»
 
-Особистий репозиторій з лабораторних робіт курсу з Java. Предметна область — кафетерій: замовлення, меню, ціни, калорійність. Кожна лабораторна — окрема гілка та Pull Request у `main`, а цей README доповнюється після кожної роботи.
+Консольний Java-застосунок для керування меню кафетерію: введення позицій, сортування, пошук, гнучка система знижок (відсоток, фіксована сума, промокоди зовнішнього сервісу) та сповіщення про зміни.
+
+Проєкт розвивається лабораторними роботами: кожна — окрема гілка та Pull Request у `main`, а цей README доповнюється після кожної роботи.
 
 ## Зміст
 
 * [Лабораторні роботи](#лабораторні-роботи)
+* [Структура проєкту](#структура-проєкту)
 * [Запуск](#запуск)
 * [Робота з Git](#робота-з-git)
 
@@ -16,6 +19,7 @@
 | ЛР2 | Опрацювання масивів із застосуванням циклів        | `lr2/menu-arrays`         | виконано   |
 | ЛР3 | Обробка винятків та власні підкласи Exception      | `lr3/menu-exceptions`     | виконано   |
 | ЛР4 | Інтерфейси, абстрактні класи, паттерн Strategy     | `lr4/menu-discounts`      | виконано   |
+| ЛР5 | Рефакторинг: Factory Method, Observer, Adapter     | `lr5/menu-patterns`       | виконано   |
 
 ---
 
@@ -199,33 +203,129 @@ A: 20.0 грн
 A: 18.0 грн
 ```
 
+---
+
+### ЛР5. Рефакторинг із паттернами GoF
+
+Це рефакторинг наявного коду ЛР1–4, а не новий проєкт: знижки з ЛР4 тепер створює фабрика, зміну знижки відстежують спостерігачі, а старий зовнішній сервіс підключено через адаптер.
+
+#### Рівень 1. Factory Method
+
+**Проблема до рефакторингу:** у `Main` об'єкти знижок створювалися напряму через `new NoDiscount()`, `new PercentDiscount(10)`, `new FixedDiscount(5)` (і ще раз `new FixedDiscount(5)` в іншому місці). Клієнтський код знав усі конкретні класи, тому кожен новий тип знижки вимагав правок там, де створюються об'єкти.
+
+**Рішення:** клас `DiscountFactory` з методом `create(String type, double value)`. Він приймає тип (`none`, `percent`, `fixed`, `promo`) і повертає готовий `DiscountStrategy`; невідомий тип дає `IllegalArgumentException`. У `Main` більше немає `new` для знижок.
+
+**Результат:** щоб додати новий тип знижки, достатньо додати клас і один `case` у фабриці. Клієнтський код не змінюється.
+
+#### Рівень 2. Observer
+
+**Ситуація:** зміна знижки в `PriceCalculator` має бути помітна іншим частинам програми (журнал, статистика), але сам калькулятор не повинен про них знати.
+
+**Рішення:**
+* `DiscountListener` — інтерфейс спостерігача з методом `onDiscountChanged(oldName, newName)`;
+* `PriceCalculator` — суб'єкт: зберігає список підписників (`addListener`) і сповіщає їх у `setStrategy`, якщо знижка справді змінилась;
+* два спостерігачі на одному суб'єкті: `DiscountLogger` (друкує `[ЛОГ]`) і `DiscountCounter` (рахує зміни, підсумок показується в кінці).
+
+#### Рівень 3. Adapter
+
+**Ситуація:** є «зовнішній» клас `LegacyPromoService` з іншим API: метод `promoCost(long kopecks, String promoCode)` працює в копійках і не реалізує `DiscountStrategy`. Наш код очікує `calculate(double price)` у гривнях.
+
+**Рішення:** `LegacyPromoAdapter implements DiscountStrategy` тримає `LegacyPromoService`, переводить гривні в копійки, викликає `promoCost()` і повертає результат у гривнях. Сам `LegacyPromoService` не змінюється.
+
+**Чому саме Adapter, а не переписування класу:** `LegacyPromoService` імітує стороннє або застаріле API, яке не можна чи не варто змінювати: інший код може від нього залежати, а після оновлення бібліотеки правки зникнуть. Адаптер ізолює переклад викликів в одному місці й дозволяє використовувати старий сервіс як звичайну знижку разом з іншими стратегіями та `PriceCalculator`.
+
+**Приклад:**
+
+```text
+=== Знижки (поліморфізм) ===
+Без знижки: 100 грн -> 100.0 грн, 3 порції -> 300.0 грн
+Знижка 10.0%: 100 грн -> 90.0 грн, 3 порції -> 270.0 грн
+  Знижка 10.0%: 100 грн -> 90.0 грн
+Знижка 5.0 грн: 100 грн -> 95.0 грн, 3 порції -> 285.0 грн
+  Знижка 5.0 грн: 100 грн -> 95.0 грн
+Промокод MORNING: 100 грн -> 85.0 грн, 3 порції -> 255.0 грн
+...
+Оберіть знижку (0 - вихід): 4
+[ЛОГ] Знижку змінено: Знижка 10.0% -> Промокод MORNING
+=== Ціни: Промокод MORNING ===
+Чай: 8.5 грн
+...
+Змін знижки за сеанс: 2
+```
+
 ## Структура проєкту
 
-Класи згруповано за призначенням у 5 файлах.
+Код лежить у `src/main/java` (стандартна структура Java-проєкту), один публічний клас у файлі. Нові лабораторні додаються як нові класи й пакети поруч.
 
-| Файл              | Лабораторна | Що містить                                                                                   |
-|-------------------|-------------|----------------------------------------------------------------------------------------------|
-| `Main.java`       | ЛР2–ЛР4     | введення даних, меню, сортування, пошук, демонстрації                                        |
-| `MenuItem.java`   | ЛР2         | позиція меню: конструктор, `toString()`, `sameAs()`                                          |
-| `Exceptions.java` | ЛР3         | `MenuException`, `InvalidPriceException`, `InvalidCaloriesException`                         |
-| `Interfaces.java` | ЛР4         | `DiscountStrategy` (з default-методами), `Describable`                                       |
-| `Discounts.java`  | ЛР4         | `NoDiscount`, `BaseDiscount`, `PercentDiscount`, `FixedDiscount`, `PriceCalculator` (Strategy) |
+```text
+.
+├── README.md
+├── .gitignore
+└── src
+    └── main/java/com/morningwave/cafe
+        ├── Main.java                             точка входу, сценарій програми
+        ├── model
+        │   └── MenuItem.java                     позиція меню
+        ├── exception
+        │   ├── MenuException.java                базовий виняток домену
+        │   ├── InvalidPriceException.java
+        │   └── InvalidCaloriesException.java
+        ├── service
+        │   └── MenuService.java                  виведення, сортування, лінійний пошук
+        ├── ui
+        │   └── ConsoleInput.java                 введення з клавіатури з обробкою помилок
+        ├── discount
+        │   ├── DiscountStrategy.java             інтерфейс стратегії
+        │   ├── Describable.java                  другий інтерфейс
+        │   ├── NoDiscount.java
+        │   ├── BaseDiscount.java                 абстрактний клас
+        │   ├── PercentDiscount.java
+        │   ├── FixedDiscount.java
+        │   └── PriceCalculator.java              контекст Strategy і суб'єкт Observer
+        ├── factory
+        │   └── DiscountFactory.java              Factory (ЛР5)
+        ├── observer
+        │   ├── DiscountListener.java             Observer (ЛР5)
+        │   ├── DiscountLogger.java
+        │   └── DiscountCounter.java
+        ├── legacy
+        │   └── LegacyPromoService.java           «зовнішній» клас із несумісним API (ЛР5)
+        └── adapter
+            └── LegacyPromoAdapter.java           Adapter (ЛР5)
+```
+
+| Пакет       | Лабораторна | Призначення                                        |
+|-------------|-------------|----------------------------------------------------|
+| `model`     | ЛР2         | дані предметної області                            |
+| `exception` | ЛР3         | власні винятки                                     |
+| `service`   | ЛР2         | операції над масивом меню                          |
+| `ui`        | ЛР2–ЛР3     | введення даних                                     |
+| `discount`  | ЛР4         | інтерфейси, абстрактний клас, Strategy             |
+| `factory`   | ЛР5         | створення знижок                                   |
+| `observer`  | ЛР5         | інтерфейс спостерігача та спостерігачі             |
+| `legacy`    | ЛР5         | несумісний зовнішній клас                          |
+| `adapter`   | ЛР5         | адаптер до `DiscountStrategy`                      |
 
 ## Запуск
 
-Потрібна Java 11 або новіша. Усі файли `.java` лежать в одній папці.
+Потрібна Java 11 або новіша. Команди виконуйте з кореня проєкту.
+
+Linux / macOS:
 
 ```bash
-javac *.java
-java Main
+javac -encoding UTF-8 -d out $(find src/main/java -name "*.java")
+java -cp out com.morningwave.cafe.Main
 ```
 
-Для Windows, якщо неправильно відображається кирилиця:
+Windows:
 
 ```bash
-javac -encoding UTF-8 *.java
-java -Dstdout.encoding=UTF-8 -Dstdin.encoding=UTF-8 Main
+dir /s /b src\main\java\*.java > sources.txt
+javac -encoding UTF-8 -d out @sources.txt
+java -Dstdout.encoding=UTF-8 -Dstdin.encoding=UTF-8 -cp out com.morningwave.cafe.Main
 ```
+
+Папка `out` та файл `sources.txt` додані в `.gitignore`.
 
 Дробові числа вводьте через крапку, наприклад `45.5`.
 
