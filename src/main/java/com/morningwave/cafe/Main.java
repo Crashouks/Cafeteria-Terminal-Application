@@ -5,6 +5,8 @@ import com.morningwave.cafe.discount.DiscountStrategy;
 import com.morningwave.cafe.discount.PriceCalculator;
 import com.morningwave.cafe.exception.MenuException;
 import com.morningwave.cafe.factory.DiscountFactory;
+import com.morningwave.cafe.model.Dessert;
+import com.morningwave.cafe.model.Drink;
 import com.morningwave.cafe.model.MenuItem;
 import com.morningwave.cafe.observer.DiscountCounter;
 import com.morningwave.cafe.observer.DiscountLogger;
@@ -18,9 +20,9 @@ public class Main {
         for (int i = 0; i < 2; i++) {
             try {
                 if (i == 0) {
-                    new MenuItem("Тест", "Тест", -1, 100);
+                    new Drink("Тест", -1, 100);
                 } else {
-                    new MenuItem("Тест", "Тест", 10, -5);
+                    new Dessert("Тест", 10, -5);
                 }
             } catch (MenuException e) {
                 System.out.println("Базовий catch: " + e.getClass().getSimpleName() + " — " + e.getMessage());
@@ -40,8 +42,8 @@ public class Main {
         for (DiscountStrategy strategy : strategies) {
             System.out.println(strategy.getName() + ": 100 грн -> " + strategy.calculate(100)
                     + " грн, 3 порції -> " + strategy.calculateTotal(100, 3) + " грн");
-            if (strategy instanceof Describable) {
-                System.out.println("  " + ((Describable) strategy).describe());
+            if (strategy instanceof Describable describable) {
+                System.out.println("  " + describable.describe());
             }
         }
 
@@ -54,7 +56,7 @@ public class Main {
         while (choice != 0) {
             System.out.println("=== Ціни: " + calculator.getStrategyName() + " ===");
             for (MenuItem item : menu) {
-                System.out.println(item.name + ": " + calculator.getPrice(item) + " грн");
+                System.out.println(item.getName() + ": " + calculator.getPrice(item) + " грн");
             }
             for (int i = 0; i < strategies.length; i++) {
                 System.out.println((i + 1) + " - " + strategies[i].getName());
@@ -85,10 +87,10 @@ public class Main {
         int cheap = 0;
         int total = 0;
         for (MenuItem item : menu) {
-            if (item.price < limit) {
+            if (item.getPrice() < limit) {
                 cheap++;
             }
-            total += item.calories;
+            total += item.getCalories();
         }
         System.out.println("Позицій дешевших за " + limit + " грн: " + cheap);
 
@@ -120,6 +122,8 @@ public class Main {
 
         System.out.println("=== Демонстрація ієрархії винятків ===");
         demoHierarchy();
+
+        InheritanceDemo.run();
 
         demoDiscounts(input, menu);
     }

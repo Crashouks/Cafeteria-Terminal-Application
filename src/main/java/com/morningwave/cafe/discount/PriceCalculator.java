@@ -34,6 +34,6 @@ public class PriceCalculator {
     }
 
     public double getPrice(MenuItem item) {
-        return strategy.calculate(item.price);
+        return strategy.calculate(item.getPrice());
     }
 }

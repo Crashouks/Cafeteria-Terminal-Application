@@ -2,6 +2,9 @@ package com.morningwave.cafe.ui;
 
 import com.morningwave.cafe.exception.InvalidPriceException;
 import com.morningwave.cafe.exception.MenuException;
+import com.morningwave.cafe.model.Dessert;
+import com.morningwave.cafe.model.Drink;
+import com.morningwave.cafe.model.HotDrink;
 import com.morningwave.cafe.model.MenuItem;
 import java.util.Scanner;
 
@@ -74,14 +77,30 @@ public class ConsoleInput {
     }
 
     private MenuItem readItem() throws MenuException {
+        System.out.print("Тип (1 - напій, 2 - гарячий напій, 3 - десерт): ");
+        int type = Integer.parseInt(scanner.nextLine());
+        if (type < 1 || type > 3) {
+            throw new MenuException("Невідомий тип позиції: " + type);
+        }
         System.out.print("Назва: ");
         String name = scanner.nextLine();
-        System.out.print("Категорія: ");
-        String category = scanner.nextLine();
         System.out.print("Ціна: ");
         double price = Double.parseDouble(scanner.nextLine());
         System.out.print("Калорійність: ");
         int calories = Integer.parseInt(scanner.nextLine());
-        return new MenuItem(name, category, price, calories);
+        switch (type) {
+            case 1:
+                return new Drink(name, price, calories, readIntField("Об'єм, мл: "));
+            case 2:
+                int volume = readIntField("Об'єм, мл: ");
+                return new HotDrink(name, price, calories, volume, readIntField("Температура, °C: "));
+            default:
+                return new Dessert(name, price, calories, readIntField("Вага, г: "));
+        }
+    }
+
+    private int readIntField(String text) {
+        System.out.print(text);
+        return Integer.parseInt(scanner.nextLine());
     }
 }
