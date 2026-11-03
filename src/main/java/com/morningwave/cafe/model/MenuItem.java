@@ -1,3 +1,9 @@
+package com.morningwave.cafe.model;
+
+import com.morningwave.cafe.exception.InvalidCaloriesException;
+import com.morningwave.cafe.exception.InvalidPriceException;
+import com.morningwave.cafe.exception.MenuException;
+
 public class MenuItem {
 
     public String name;
