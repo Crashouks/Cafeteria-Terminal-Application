@@ -2,55 +2,6 @@ import java.util.Scanner;
 
 public class Main {
 
-    static class MenuException extends Exception {
-        MenuException(String message) {
-            super(message);
-        }
-    }
-
-    static class InvalidPriceException extends MenuException {
-        double value;
-
-        InvalidPriceException(String message, double value) {
-            super(message);
-            this.value = value;
-        }
-    }
-
-    static class InvalidCaloriesException extends MenuException {
-        int value;
-
-        InvalidCaloriesException(String message, int value) {
-            super(message);
-            this.value = value;
-        }
-    }
-
-    static class MenuItem {
-        String name;
-        String category;
-        double price;
-        int calories;
-
-        MenuItem(String name, String category, double price, int calories) throws MenuException {
-            if (price <= 0) {
-                throw new InvalidPriceException("Ціна має бути більшою за 0", price);
-            }
-            if (calories < 0) {
-                throw new InvalidCaloriesException("Калорійність не може бути від'ємною", calories);
-            }
-            this.name = name;
-            this.category = category;
-            this.price = price;
-            this.calories = calories;
-        }
-
-        @Override
-        public String toString() {
-            return name + " | " + category + " | " + price + " грн | " + calories + " ккал";
-        }
-    }
-
     static MenuItem readItem(Scanner scanner) throws MenuException {
         System.out.print("Назва: ");
         String name = scanner.nextLine();
@@ -110,12 +61,41 @@ public class Main {
         }
     }
 
+    static MenuItem[] createMenu(Scanner scanner) {
+        while (true) {
+            System.out.print("Кількість позицій меню: ");
+            try {
+                return new MenuItem[Integer.parseInt(scanner.nextLine())];
+            } catch (NumberFormatException e) {
+                System.out.println("Помилка: кількість має бути цілим числом.");
+            } catch (NegativeArraySizeException e) {
+                System.out.println("Помилка: кількість не може бути від'ємною.");
+            }
+        }
+    }
+
+    static void printMenu(String title, MenuItem[] menu) {
+        System.out.println(title);
+        for (MenuItem item : menu) {
+            System.out.println(item);
+        }
+    }
+
+    static void sortByPrice(MenuItem[] menu) {
+        for (int i = 0; i < menu.length - 1; i++) {
+            for (int j = 0; j < menu.length - 1 - i; j++) {
+                if (menu[j].price > menu[j + 1].price) {
+                    MenuItem temp = menu[j];
+                    menu[j] = menu[j + 1];
+                    menu[j + 1] = temp;
+                }
+            }
+        }
+    }
+
     static int linearSearch(MenuItem[] menu, MenuItem sample) {
         for (int i = 0; i < menu.length; i++) {
-            if (menu[i].name.equals(sample.name)
-                    && menu[i].category.equals(sample.category)
-                    && menu[i].price == sample.price
-                    && menu[i].calories == sample.calories) {
+            if (menu[i].sameAs(sample)) {
                 return i;
             }
         }
@@ -136,26 +116,41 @@ public class Main {
         }
     }
 
-    static void printMenu(String title, MenuItem[] menu) {
-        System.out.println(title);
-        for (MenuItem item : menu) {
-            System.out.println(item);
+    static void demoDiscounts(Scanner scanner, MenuItem[] menu) {
+        DiscountStrategy[] strategies = {new NoDiscount(), new PercentDiscount(10), new FixedDiscount(5)};
+
+        System.out.println("=== Знижки (поліморфізм) ===");
+        for (DiscountStrategy strategy : strategies) {
+            System.out.println(strategy.getName() + ": 100 грн -> " + strategy.calculate(100)
+                    + " грн, 3 порції -> " + strategy.calculateTotal(100, 3) + " грн");
+        }
+
+        Describable described = new FixedDiscount(5);
+        System.out.println(described.describe());
+
+        PriceCalculator calculator = new PriceCalculator(strategies[0]);
+        int choice = -1;
+        while (choice != 0) {
+            System.out.println("=== Ціни: " + calculator.getStrategyName() + " ===");
+            for (MenuItem item : menu) {
+                System.out.println(item.name + ": " + calculator.getPrice(item) + " грн");
+            }
+            for (int i = 0; i < strategies.length; i++) {
+                System.out.println((i + 1) + " - " + strategies[i].getName());
+            }
+            choice = readInt(scanner, "Оберіть знижку (0 - вихід): ");
+            if (choice != 0) {
+                try {
+                    calculator.setStrategy(strategies[choice - 1]);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Такої знижки немає.");
+                }
+            }
         }
     }
 
     static void run(Scanner scanner) {
-        MenuItem[] menu = null;
-        while (menu == null) {
-            System.out.print("Кількість позицій меню: ");
-            try {
-                int count = Integer.parseInt(scanner.nextLine());
-                menu = new MenuItem[count];
-            } catch (NumberFormatException e) {
-                System.out.println("Помилка: кількість має бути цілим числом.");
-            } catch (NegativeArraySizeException e) {
-                System.out.println("Помилка: кількість не може бути від'ємною.");
-            }
-        }
+        MenuItem[] menu = createMenu(scanner);
 
         for (int i = 0; i < menu.length; i++) {
             System.out.println("--- Позиція " + (i + 1) + " ---");
@@ -166,36 +161,23 @@ public class Main {
 
         double limit = readDouble(scanner, "Цінова межа: ");
         int cheap = 0;
+        int total = 0;
         for (MenuItem item : menu) {
             if (item.price < limit) {
                 cheap++;
             }
+            total += item.calories;
         }
         System.out.println("Позицій дешевших за " + limit + " грн: " + cheap);
 
-        int total = 0;
-        for (MenuItem item : menu) {
-            total += item.calories;
-        }
         try {
-            int average = total / menu.length;
-            System.out.println("Середня калорійність: " + average + " ккал");
+            System.out.println("Середня калорійність: " + total / menu.length + " ккал");
         } catch (ArithmeticException e) {
             System.out.println("Меню порожнє, середню калорійність обчислити неможливо.");
         }
 
         printMenu("=== До сортування ===", menu);
-
-        for (int i = 0; i < menu.length - 1; i++) {
-            for (int j = 0; j < menu.length - 1 - i; j++) {
-                if (menu[j].price > menu[j + 1].price) {
-                    MenuItem temp = menu[j];
-                    menu[j] = menu[j + 1];
-                    menu[j + 1] = temp;
-                }
-            }
-        }
-
+        sortByPrice(menu);
         printMenu("=== Після сортування за ціною ===", menu);
 
         System.out.println("=== Пошук позиції ===");
@@ -216,6 +198,8 @@ public class Main {
 
         System.out.println("=== Демонстрація ієрархії винятків ===");
         demoHierarchy();
+
+        demoDiscounts(scanner, menu);
     }
 
     public static void main(String[] args) {
