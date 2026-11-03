@@ -42,7 +42,7 @@ public class MenuService {
 
     public static int linearSearch(MenuItem[] menu, MenuItem sample) {
         for (int i = 0; i < menu.length; i++) {
-            if (menu[i].equals(sample)) {
+            if (menu[i].sameContent(sample)) {
                 return i;
             }
         }

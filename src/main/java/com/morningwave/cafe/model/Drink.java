@@ -1,7 +1,6 @@
 package com.morningwave.cafe.model;
 
 import com.morningwave.cafe.exception.MenuException;
-import java.util.Objects;
 
 /** Напій: «напій є різновидом позиції меню». Не final, бо має підклас HotDrink. */
 public sealed class Drink extends MenuItem permits HotDrink {
@@ -10,15 +9,15 @@ public sealed class Drink extends MenuItem permits HotDrink {
 
     private final int volumeMl;
 
-    public Drink(String name, double price, int calories, int volumeMl) throws MenuException {
-        super(name, price, calories);
+    public Drink(long id, String name, double price, int calories, int volumeMl) throws MenuException {
+        super(id, name, price, calories);
         this.volumeMl = volumeMl;
         trace("Drink(" + name + ", " + volumeMl + " мл)");
     }
 
     /** Делегування через this(...): ініціалізація описана в одному місці. */
-    public Drink(String name, double price, int calories) throws MenuException {
-        this(name, price, calories, DEFAULT_VOLUME_ML);
+    public Drink(long id, String name, double price, int calories) throws MenuException {
+        this(id, name, price, calories, DEFAULT_VOLUME_ML);
     }
 
     public int getVolumeMl() {
@@ -41,15 +40,7 @@ public sealed class Drink extends MenuItem permits HotDrink {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!super.equals(o)) {   // super.equals уже порівняв getClass(), тож приведення безпечне
-            return false;
-        }
-        return volumeMl == ((Drink) o).volumeMl;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), volumeMl);
+    public boolean sameContent(MenuItem o) {
+        return super.sameContent(o) && volumeMl == ((Drink) o).volumeMl;
     }
 }

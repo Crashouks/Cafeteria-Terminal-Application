@@ -29,7 +29,7 @@ public class InheritanceDemo {
     private static void demoConstructorChain() throws MenuException {
         System.out.println("--- Ланцюжок конструкторів: new HotDrink(\"Капучино\", 60, 120) ---");
         MenuItem.setTraceConstructors(true);
-        new HotDrink("Капучино", 60, 120);
+        new HotDrink(1, "Капучино", 60, 120);
         MenuItem.setTraceConstructors(false);
         System.out.println("Спочатку HotDrink(3 арг.) → this(...) → HotDrink(4 арг.) → this(...) → HotDrink(5 арг.) → super(...) → Drink → MenuItem;");
         System.out.println("тіла виконуються від базового класу до похідного.");
@@ -38,9 +38,9 @@ public class InheritanceDemo {
     private static MenuItem[] demoPolymorphism() throws MenuException {
         System.out.println("--- Поліморфізм: масив MenuItem[] ---");
         MenuItem[] items = {
-                new Drink("Лимонад", 40, 90, 300),
-                new HotDrink("Американо", 45, 5, 250, 85),
-                new Dessert("Чізкейк", 85, 380, 150)
+                new Drink(2, "Лимонад", 40, 90, 300),
+                new HotDrink(3, "Американо", 45, 5, 250, 85),
+                new Dessert(4, "Чізкейк", 85, 380, 150)
         };
         for (MenuItem item : items) {
             // Статичний тип змінної — MenuItem, а виклик іде за динамічним типом об'єкта
@@ -65,11 +65,14 @@ public class InheritanceDemo {
     }
 
     private static void demoEquals() throws MenuException {
-        System.out.println("--- equals(): симетрія ---");
-        Drink drink = new Drink("Чай", 30, 2, 250);
-        HotDrink hot = new HotDrink("Чай", 30, 2, 250, 80);
-        System.out.println("Реалізація з getClass():  drink.equals(hot) = " + drink.equals(hot)
-                + ", hot.equals(drink) = " + hot.equals(drink) + "  (симетрично)");
+        System.out.println("--- equals() за id та sameContent(): симетрія ---");
+        Drink drink = new Drink(5, "Чай", 30, 2, 250);
+        HotDrink hot = new HotDrink(6, "Чай", 30, 2, 250, 80);
+        System.out.println("Реалізація з getClass():  drink.sameContent(hot) = " + drink.sameContent(hot)
+                + ", hot.sameContent(drink) = " + hot.sameContent(drink) + "  (симетрично)");
+        Drink sameId = new Drink(5, "Чай (нова версія)", 35, 2, 250);
+        System.out.println("equals() за id (ЛР7–9):   drink.equals(sameId) = " + drink.equals(sameId)
+                + ", drink.equals(hot) = " + drink.equals(hot) + "  (інший id і клас)");
 
         LooseItem base = new LooseItem("Чай");
         LooseDrink sub = new LooseDrink("Чай", 250);

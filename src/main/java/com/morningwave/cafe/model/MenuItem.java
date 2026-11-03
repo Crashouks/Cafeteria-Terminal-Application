@@ -3,7 +3,6 @@ package com.morningwave.cafe.model;
 import com.morningwave.cafe.exception.InvalidCaloriesException;
 import com.morningwave.cafe.exception.InvalidPriceException;
 import com.morningwave.cafe.exception.MenuException;
-import java.util.Objects;
 
 /**
  * Базовий клас ієрархії меню. Абстрактний: «просто позиція меню» не існує —
@@ -12,23 +11,22 @@ import java.util.Objects;
  * Раніше тип позиції визначався рядковим полем category ("Напій", "Десерт");
  * тепер тип — це сам клас, а категорію повертає абстрактний метод getCategory().
  */
-public abstract sealed class MenuItem permits Drink, Dessert {
+public abstract sealed class MenuItem extends BaseEntity permits Drink, Dessert {
 
     /** Вмикає повідомлення в конструкторах (для демонстрації ланцюжка викликів). */
     private static boolean traceConstructors = false;
 
-    private final String name;
     private final double price;
     private final int calories;
 
-    protected MenuItem(String name, double price, int calories) throws MenuException {
+    protected MenuItem(long id, String name, double price, int calories) throws MenuException {
+        super(id, name);
         if (price <= 0) {
             throw new InvalidPriceException("Ціна має бути більшою за 0", price);
         }
         if (calories < 0) {
             throw new InvalidCaloriesException("Калорійність не може бути від'ємною", calories);
         }
-        this.name = name;
         this.price = price;
         this.calories = calories;
         trace("MenuItem(" + name + ")");
@@ -42,10 +40,6 @@ public abstract sealed class MenuItem permits Drink, Dessert {
         if (traceConstructors) {
             System.out.println("   [конструктор] " + message);
         }
-    }
-
-    public String getName() {
-        return name;
     }
 
     public double getPrice() {
@@ -77,30 +71,23 @@ public abstract sealed class MenuItem permits Drink, Dessert {
 
     @Override
     public String toString() {
-        return name + " | " + getCategory() + " | " + price + " грн | " + calories + " ккал";
+        return getName() + " | " + getCategory() + " | " + price + " грн | " + calories + " ккал";
     }
 
     /**
-     * Вибір getClass() (а не instanceof): підкласи додають власні поля, тож позиції
-     * різних типів ніколи не мають вважатися рівними. Це зберігає симетрію
-     * a.equals(b) == b.equals(a). Докладніше — у README та InheritanceDemo.
+     * Порівняння за вмістом (усі поля, а не id) — колишній equals() з ЛР6. Потрібен для
+     * пошуку за зразком (linearSearch), бо equals() тепер успадковано від BaseEntity і працює за id.
+     * getClass() (а не instanceof) зберігає симетрію: підкласи додають власні поля.
      */
-    @Override
-    public boolean equals(Object o) {
+    public boolean sameContent(MenuItem o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        MenuItem other = (MenuItem) o;
-        return name.equals(other.name)
-                && Double.compare(price, other.price) == 0
-                && calories == other.calories;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, price, calories);
+        return getName().equals(o.getName())
+                && Double.compare(price, o.price) == 0
+                && calories == o.calories;
     }
 }

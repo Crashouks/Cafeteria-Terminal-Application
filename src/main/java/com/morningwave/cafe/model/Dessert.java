@@ -1,7 +1,6 @@
 package com.morningwave.cafe.model;
 
 import com.morningwave.cafe.exception.MenuException;
-import java.util.Objects;
 
 /** Десерт: «десерт є різновидом позиції меню». Підкласів не має, тому final. */
 public final class Dessert extends MenuItem {
@@ -10,14 +9,14 @@ public final class Dessert extends MenuItem {
 
     private final int weightG;
 
-    public Dessert(String name, double price, int calories, int weightG) throws MenuException {
-        super(name, price, calories);
+    public Dessert(long id, String name, double price, int calories, int weightG) throws MenuException {
+        super(id, name, price, calories);
         this.weightG = weightG;
         trace("Dessert(" + name + ", " + weightG + " г)");
     }
 
-    public Dessert(String name, double price, int calories) throws MenuException {
-        this(name, price, calories, DEFAULT_WEIGHT_G);
+    public Dessert(long id, String name, double price, int calories) throws MenuException {
+        this(id, name, price, calories, DEFAULT_WEIGHT_G);
     }
 
     public int getWeightG() {
@@ -40,15 +39,7 @@ public final class Dessert extends MenuItem {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!super.equals(o)) {
-            return false;
-        }
-        return weightG == ((Dessert) o).weightG;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), weightG);
+    public boolean sameContent(MenuItem o) {
+        return super.sameContent(o) && weightG == ((Dessert) o).weightG;
     }
 }

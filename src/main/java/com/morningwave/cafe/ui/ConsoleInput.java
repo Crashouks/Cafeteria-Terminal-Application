@@ -11,6 +11,7 @@ import java.util.Scanner;
 public class ConsoleInput {
 
     private Scanner scanner;
+    private long nextId = 1;
 
     public ConsoleInput(Scanner scanner) {
         this.scanner = scanner;
@@ -90,12 +91,12 @@ public class ConsoleInput {
         int calories = Integer.parseInt(scanner.nextLine());
         switch (type) {
             case 1:
-                return new Drink(name, price, calories, readIntField("Об'єм, мл: "));
+                return new Drink(nextId++, name, price, calories, readIntField("Об'єм, мл: "));
             case 2:
                 int volume = readIntField("Об'єм, мл: ");
-                return new HotDrink(name, price, calories, volume, readIntField("Температура, °C: "));
+                return new HotDrink(nextId++, name, price, calories, volume, readIntField("Температура, °C: "));
             default:
-                return new Dessert(name, price, calories, readIntField("Вага, г: "));
+                return new Dessert(nextId++, name, price, calories, readIntField("Вага, г: "));
         }
     }
 

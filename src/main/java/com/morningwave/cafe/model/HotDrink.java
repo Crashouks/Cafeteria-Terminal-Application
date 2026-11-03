@@ -1,7 +1,6 @@
 package com.morningwave.cafe.model;
 
 import com.morningwave.cafe.exception.MenuException;
-import java.util.Objects;
 
 /**
  * Гарячий напій: третій рівень ієрархії MenuItem → Drink → HotDrink.
@@ -14,19 +13,19 @@ public final class HotDrink extends Drink {
 
     private final int temperatureC;
 
-    public HotDrink(String name, double price, int calories, int volumeMl, int temperatureC)
+    public HotDrink(long id, String name, double price, int calories, int volumeMl, int temperatureC)
             throws MenuException {
-        super(name, price, calories, volumeMl);
+        super(id, name, price, calories, volumeMl);
         this.temperatureC = temperatureC;
         trace("HotDrink(" + name + ", " + temperatureC + " °C)");
     }
 
-    public HotDrink(String name, double price, int calories, int volumeMl) throws MenuException {
-        this(name, price, calories, volumeMl, DEFAULT_TEMPERATURE_C);
+    public HotDrink(long id, String name, double price, int calories, int volumeMl) throws MenuException {
+        this(id, name, price, calories, volumeMl, DEFAULT_TEMPERATURE_C);
     }
 
-    public HotDrink(String name, double price, int calories) throws MenuException {
-        this(name, price, calories, DEFAULT_VOLUME_ML);
+    public HotDrink(long id, String name, double price, int calories) throws MenuException {
+        this(id, name, price, calories, DEFAULT_VOLUME_ML);
     }
 
     public int getTemperatureC() {
@@ -49,15 +48,7 @@ public final class HotDrink extends Drink {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!super.equals(o)) {
-            return false;
-        }
-        return temperatureC == ((HotDrink) o).temperatureC;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), temperatureC);
+    public boolean sameContent(MenuItem o) {
+        return super.sameContent(o) && temperatureC == ((HotDrink) o).temperatureC;
     }
 }

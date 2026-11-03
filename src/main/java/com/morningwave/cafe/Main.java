@@ -20,9 +20,9 @@ public class Main {
         for (int i = 0; i < 2; i++) {
             try {
                 if (i == 0) {
-                    new Drink("Тест", -1, 100);
+                    new Drink(0, "Тест", -1, 100);
                 } else {
-                    new Dessert("Тест", 10, -5);
+                    new Dessert(0, "Тест", 10, -5);
                 }
             } catch (MenuException e) {
                 System.out.println("Базовий catch: " + e.getClass().getSimpleName() + " — " + e.getMessage());
@@ -124,6 +124,8 @@ public class Main {
         demoHierarchy();
 
         InheritanceDemo.run();
+
+        CrudDemo.run();
 
         demoDiscounts(input, menu);
     }
