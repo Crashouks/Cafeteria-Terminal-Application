@@ -3,6 +3,7 @@ package com.morningwave.cafe;
 import com.morningwave.cafe.discount.Describable;
 import com.morningwave.cafe.discount.DiscountStrategy;
 import com.morningwave.cafe.discount.PriceCalculator;
+import com.morningwave.cafe.db.DBConnection;
 import com.morningwave.cafe.exception.MenuException;
 import com.morningwave.cafe.factory.DiscountFactory;
 import com.morningwave.cafe.model.Dessert;
@@ -131,12 +132,25 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
+        DBConnection database = DBConnection.getInstance();
         try {
-            run(new ConsoleInput(scanner));
+            database.initializeDatabase();
+            if (args.length > 0 && "--jdbc-demo".equals(args[0])) {
+                JdbcDemo.run();
+                return;
+            }
+
+            Scanner scanner = new Scanner(System.in);
+            try {
+                run(new ConsoleInput(scanner));
+            } finally {
+                scanner.close();
+                System.out.println("Роботу завершено.");
+            }
+        } catch (MenuException e) {
+            throw new IllegalStateException("Could not run the application", e);
         } finally {
-            scanner.close();
-            System.out.println("Роботу завершено.");
+            database.close();
         }
     }
 }

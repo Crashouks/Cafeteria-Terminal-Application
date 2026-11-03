@@ -9,6 +9,7 @@
 * [Лабораторні роботи](#лабораторні-роботи)
 * [Структура проєкту](#структура-проєкту)
 * [Запуск](#запуск)
+* [ЛР10: Maven та JDBC](#лр10-maven-та-jdbc)
 * [Робота з Git](#робота-з-git)
 
 ## Лабораторні роботи
@@ -22,6 +23,7 @@
 | ЛР5 | Рефакторинг: Factory Method, Observer, Adapter     | `lr5/menu-patterns`       | виконано   |
 | ЛР6 | Ієрархія класів, наслідування, sealed              | `лр6-реалізація-ієрархії-класів-на-основі-принципів-наслідування` | виконано   |
 | ЛР7–9 | Типізований CRUD-сервіс: generics, колекції, сортування | `lr7-9/crud-service` | виконано   |
+| ЛР10 | Maven та реляційна БД через JDBC                    | `lr10/maven-jdbc` | виконано   |
 
 ---
 
@@ -442,65 +444,82 @@ findAllSortedByNameAndByPrice() (два «Чай» різняться ціною
 
 Конструктори сутностей тепер приймають `id` першим параметром (`new Drink(1, "Чай", 45, 2, 250)`).
 
+## ЛР10: Maven та JDBC
+
+Проєкт використовує Maven (Java 21, UTF-8), H2 у файловому режимі та пул з'єднань HikariCP. JDBC-сервіси реалізують той самий `CRUDService<T>`/`MenuItemService`, що й in-memory версія; SQL і перетворення рядків (`mapRow`) зосереджені у `AbstractJdbcCrudService<T>`, а `JdbcMenuItemService` і `JdbcMenuItemNoteService` задають SQL та мапінг типів.
+
+Схема створюється з `src/main/resources/init.sql` автоматично під час кожного запуску. Скрипт ідемпотентний. Зв'язок: `menu_items (1) ──< menu_item_notes (N)`. Зовнішній ключ використовує `ON DELETE CASCADE`: нотатка не має самостійного сенсу без позиції меню, тому видалення позиції очищує її нотатки.
+
+#### Запуск з нуля
+
+Потрібні JDK 21+ та Maven 3.8+. З кореня проєкту виконайте:
+
+```shell
+mvn compile
+mvn exec:java
+```
+
+Файл БД створюється автоматично у `data/cafeteria.mv.db`. Налаштування за замовчуванням — у `src/main/resources/application.properties`; для іншої БД відредагуйте `db.url`, `db.username` і `db.password`, а також додайте JDBC-драйвер у `pom.xml`. Параметри можна перевизначити системними властивостями `app.db.url`, `app.db.username` і `app.db.password`. Для JDBC-демонстрації виконайте `mvn exec:java -Dexec.args="--jdbc-demo"`.
+
+#### JDBC-демонстрації
+
+* `save` додає або оновлює за `id`; `findAllSortedByNameAndByPrice` і `findAllSortedByName` використовують `ORDER BY`, а `findPage(page, pageSize)` — `LIMIT/OFFSET`.
+* `saveWithNote` записує позицію та нотатку в одній транзакції. Деморежим навмисно повторно вставляє зайвий первинний ключ нотатки: виняток спричиняє `rollback`, який також скасовує вставлення позиції.
+* SQL-ін'єкція: небезпечний варіант `"... WHERE name = '" + name + "'"` з вводом `' OR '1'='1` перетворює умову на `name = '' OR '1'='1'`. У робочому `findByName` застосовано `WHERE name = ?` і `PreparedStatement.setString`; той самий ввід є лише буквальним ім'ям, не SQL-кодом. Небезпечний варіант наведено лише тут, у README.
+* `JdbcDemo` вимірює вставлення 500 записів по одному та через `addBatch/executeBatch` і виводить обидва часи в мілісекундах. Один локальний запуск (Windows, JDK 25, H2): 694 мс по одному проти 116 мс пакетно. Результати залежать від диска, ОС, JVM та навантаження; запускайте демо локально для актуального виміру.
+
+#### Пул з'єднань замість одного спільного Connection
+
+Singleton тут зберігає `HikariDataSource`, а не єдине `Connection`: кожна операція отримує власне з'єднання з пулу й повертає його через try-with-resources. Один глобальний `Connection` був би небезпечним при паралельних запитах (перемішування операцій), при розриві з'єднання (потрібне відновлення) та під час одночасних транзакцій (спільний стан auto-commit/commit/rollback). Пул обмежує кількість фізичних з'єднань і видає окреме логічне з'єднання кожному виклику.
+
 ## Структура проєкту
 
-Код лежить у `src/main/java` (стандартна структура Java-проєкту), один публічний клас у файлі. Нові лабораторні додаються як нові класи й пакети поруч.
+Код лежить у `src/main/java`, ресурси БД — у `src/main/resources` (стандартна структура Maven-проєкту), один публічний клас у файлі. Нові лабораторні додаються як нові класи й пакети поруч.
 
 ```text
 .
+├── pom.xml
 ├── README.md
 ├── .gitignore
 └── src
-    └── main/java/com/morningwave/cafe
-        ├── Main.java                             точка входу, сценарій програми
-        ├── InheritanceDemo.java                  демонстрація ієрархії (ЛР6)
-        ├── CrudDemo.java                         демонстрація CRUD-сервісу (ЛР7–9)
-        ├── model
-        │   ├── BaseEntity.java                   id + name, equals/hashCode за id (ЛР7–9)
-        │   ├── MenuItem.java                     абстрактний sealed-клас, extends BaseEntity
-        │   ├── Drink.java                        напій
-        │   ├── HotDrink.java                     гарячий напій (3-й рівень)
-        │   ├── Dessert.java                      десерт
-        │   └── Combo.java                        композиція: напій + десерт + знижка
-        ├── exception
-        │   ├── MenuException.java                базовий виняток домену
-        │   ├── EntityNotFoundException.java      сутність не знайдена (ЛР7–9)
-        │   ├── InvalidPriceException.java
-        │   └── InvalidCaloriesException.java
-        ├── service
-        │   ├── MenuService.java                  виведення, сортування, лінійний пошук
-        │   ├── CRUDService.java                  узагальнений CRUD-інтерфейс (ЛР7–9)
-        │   ├── InMemoryCrudService.java          сховище на LinkedHashMap
-        │   ├── MenuItemService.java              інтерфейс сутності з сортуванням «назва → ціна»
-        │   ├── InMemoryMenuItemService.java
-        │   └── EntityUtils.java                  printAll(Collection<? extends BaseEntity>)
-        ├── ui
-        │   └── ConsoleInput.java                 введення з клавіатури з обробкою помилок
-        ├── discount
-        │   ├── DiscountStrategy.java             інтерфейс стратегії
-        │   ├── Describable.java                  другий інтерфейс
-        │   ├── NoDiscount.java
-        │   ├── BaseDiscount.java                 абстрактний клас
-        │   ├── PercentDiscount.java
-        │   ├── FixedDiscount.java
-        │   └── PriceCalculator.java              контекст Strategy і суб'єкт Observer
-        ├── factory
-        │   └── DiscountFactory.java              Factory (ЛР5)
-        ├── observer
-        │   ├── DiscountListener.java             Observer (ЛР5)
-        │   ├── DiscountLogger.java
-        │   └── DiscountCounter.java
-        ├── legacy
-        │   └── LegacyPromoService.java           «зовнішній» клас із несумісним API (ЛР5)
-        └── adapter
-            └── LegacyPromoAdapter.java           Adapter (ЛР5)
+    └── main
+        ├── java/com/morningwave/cafe
+        │   ├── Main.java                         точка входу, автоматична ініціалізація БД
+        │   ├── JdbcDemo.java                     транзакція, PreparedStatement, batch і пагінація
+        │   ├── CrudDemo.java                     демонстрація in-memory CRUD (ЛР7–9)
+        │   ├── db
+        │   │   ├── DBConnection.java             Singleton з HikariCP
+        │   │   └── DataAccessException.java
+        │   ├── model
+        │   │   ├── BaseEntity.java
+        │   │   ├── MenuItem.java
+        │   │   ├── MenuItemNote.java             друга сутність, FK до menu_items
+        │   │   └── ...                           інші моделі меню
+        │   ├── exception
+        │   │   └── ...                           винятки предметної області
+        │   ├── service
+        │   │   ├── CRUDService.java
+        │   │   ├── InMemoryCrudService.java
+        │   │   ├── AbstractJdbcCrudService.java  Template Method, спільний CRUD
+        │   │   ├── JdbcMenuItemService.java
+        │   │   └── JdbcMenuItemNoteService.java
+        │   ├── ui
+        │   ├── discount
+        │   ├── factory
+        │   ├── observer
+        │   ├── legacy
+        │   └── adapter
+        └── resources
+            ├── application.properties            JDBC URL та облікові дані
+            └── init.sql                          ідемпотентна схема БД
 ```
 
 | Пакет       | Лабораторна | Призначення                                        |
 |-------------|-------------|----------------------------------------------------|
-| `model`     | ЛР2, ЛР6    | дані предметної області, ієрархія MenuItem         |
-| `exception` | ЛР3         | власні винятки                                     |
-| `service`   | ЛР2, ЛР7–9  | операції над меню, узагальнений CRUD-сервіс        |
+| `model`     | ЛР2, ЛР6, ЛР10 | дані предметної області та сутності БД           |
+| `exception` | ЛР3, ЛР7–10 | власні винятки                                     |
+| `service`   | ЛР2, ЛР7–10 | in-memory та JDBC CRUD-сервіси                    |
+| `db`        | ЛР10        | Singleton-пул JDBC-з'єднань                       |
 | `ui`        | ЛР2–ЛР3     | введення даних                                     |
 | `discount`  | ЛР4         | інтерфейси, абстрактний клас, Strategy             |
 | `factory`   | ЛР5         | створення знижок                                   |
@@ -510,26 +529,7 @@ findAllSortedByNameAndByPrice() (два «Чай» різняться ціною
 
 ## Запуск
 
-Потрібна Java 21 або новіша (sealed-класи та `switch` з pattern matching). Команди виконуйте з кореня проєкту.
-
-Linux / macOS:
-
-```bash
-javac -encoding UTF-8 -d out $(find src/main/java -name "*.java")
-java -cp out com.morningwave.cafe.Main
-```
-
-Windows:
-
-```bash
-dir /s /b src\main\java\*.java > sources.txt
-javac -encoding UTF-8 -d out @sources.txt
-java -Dstdout.encoding=UTF-8 -Dstdin.encoding=UTF-8 -cp out com.morningwave.cafe.Main
-```
-
-Папка `out` та файл `sources.txt` додані в `.gitignore`.
-
-Дробові числа вводьте через крапку, наприклад `45.5`.
+Потрібні Java 21+ та Maven 3.8+. Команди виконуйте з кореня проєкту: `mvn compile` для компіляції та `mvn exec:java` для запуску. Параметри JDBC та запуск демонстрації описані в [розділі ЛР10](#лр10-maven-та-jdbc). Дробові числа меню вводьте через крапку, наприклад `45.5`.
 
 ## Робота з Git
 
