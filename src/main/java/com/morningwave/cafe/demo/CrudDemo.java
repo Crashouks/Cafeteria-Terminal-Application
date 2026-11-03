@@ -1,4 +1,4 @@
-package com.morningwave.cafe;
+package com.morningwave.cafe.demo;
 
 import com.morningwave.cafe.exception.EntityNotFoundException;
 import com.morningwave.cafe.exception.MenuException;
@@ -15,7 +15,10 @@ import com.morningwave.cafe.service.MenuItemService;
 import java.util.Comparator;
 
 /** Демонстрація ЛР7–9: типізований CRUD-сервіс, колекції, сортування. */
-public class CrudDemo {
+public final class CrudDemo {
+
+    private CrudDemo() {
+    }
 
     public static void main(String[] args) {
         run();

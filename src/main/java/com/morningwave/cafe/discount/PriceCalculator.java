@@ -4,21 +4,23 @@ import com.morningwave.cafe.model.MenuItem;
 import com.morningwave.cafe.observer.DiscountListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class PriceCalculator {
 
     private DiscountStrategy strategy;
-    private List<DiscountListener> listeners = new ArrayList<>();
+    private final List<DiscountListener> listeners = new ArrayList<>();
 
     public PriceCalculator(DiscountStrategy strategy) {
-        this.strategy = strategy;
+        this.strategy = Objects.requireNonNull(strategy, "strategy");
     }
 
     public void addListener(DiscountListener listener) {
-        listeners.add(listener);
+        listeners.add(Objects.requireNonNull(listener, "listener"));
     }
 
     public void setStrategy(DiscountStrategy newStrategy) {
+        Objects.requireNonNull(newStrategy, "newStrategy");
         if (newStrategy == strategy) {
             return;
         }

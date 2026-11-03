@@ -5,7 +5,10 @@ import com.morningwave.cafe.model.Drink;
 import com.morningwave.cafe.model.HotDrink;
 import com.morningwave.cafe.model.MenuItem;
 
-public class MenuService {
+public final class MenuService {
+
+    private MenuService() {
+    }
 
     public static void printMenu(String title, MenuItem[] menu) {
         System.out.println(title);

@@ -1,4 +1,4 @@
-package com.morningwave.cafe;
+package com.morningwave.cafe.demo;
 
 import com.morningwave.cafe.discount.PercentDiscount;
 import com.morningwave.cafe.exception.MenuException;
@@ -10,7 +10,10 @@ import com.morningwave.cafe.model.MenuItem;
 import com.morningwave.cafe.service.MenuService;
 
 /** Демонстрація ЛР6: ієрархія MenuItem → Drink → HotDrink, MenuItem → Dessert. */
-public class InheritanceDemo {
+public final class InheritanceDemo {
+
+    private InheritanceDemo() {
+    }
 
     public static void run() {
         System.out.println("=== ЛР6: ієрархія класів ===");

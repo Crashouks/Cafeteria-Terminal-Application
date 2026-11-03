@@ -1,9 +1,12 @@
 package com.morningwave.cafe;
 
+import com.morningwave.cafe.db.DBConnection;
+import com.morningwave.cafe.demo.CrudDemo;
+import com.morningwave.cafe.demo.InheritanceDemo;
+import com.morningwave.cafe.demo.JdbcDemo;
 import com.morningwave.cafe.discount.Describable;
 import com.morningwave.cafe.discount.DiscountStrategy;
 import com.morningwave.cafe.discount.PriceCalculator;
-import com.morningwave.cafe.db.DBConnection;
 import com.morningwave.cafe.exception.MenuException;
 import com.morningwave.cafe.factory.DiscountFactory;
 import com.morningwave.cafe.model.Dessert;
@@ -15,7 +18,10 @@ import com.morningwave.cafe.service.MenuService;
 import com.morningwave.cafe.ui.ConsoleInput;
 import java.util.Scanner;
 
-public class Main {
+public final class Main {
+
+    private Main() {
+    }
 
     static void demoHierarchy() {
         for (int i = 0; i < 2; i++) {

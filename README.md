@@ -384,7 +384,7 @@ classDiagram
 
 ### ЛР7–9. Типізований CRUD-сервіс: узагальнення, колекції, сортування
 
-Сутності — позиції меню (`Drink`/`HotDrink`, `Dessert`). `MenuItem` тепер наслідує `BaseEntity` (поля `long id` — незмінне, `String name`), тож один і той самий `InMemoryCrudService<T>` працює і з напоями, і з десертами без жодних змін. Демонстрація — `CrudDemo` (запускається з `Main` після блоку ЛР6 або окремо: `java -cp out com.morningwave.cafe.CrudDemo`).
+Сутності — позиції меню (`Drink`/`HotDrink`, `Dessert`). `MenuItem` тепер наслідує `BaseEntity` (поля `long id` — незмінне, `String name`), тож один і той самий `InMemoryCrudService<T>` працює і з напоями, і з десертами без жодних змін. Демонстрація — `CrudDemo` (запускається з `Main` після блоку ЛР6 або окремо: `java -cp out com.morningwave.cafe.demo.CrudDemo`).
 
 | Тип | Призначення |
 |-----|-------------|
@@ -485,8 +485,10 @@ Singleton тут зберігає `HikariDataSource`, а не єдине `Connec
     └── main
         ├── java/com/morningwave/cafe
         │   ├── Main.java                         точка входу, автоматична ініціалізація БД
-        │   ├── JdbcDemo.java                     транзакція, PreparedStatement, batch і пагінація
-        │   ├── CrudDemo.java                     демонстрація in-memory CRUD (ЛР7–9)
+        │   ├── demo
+        │   │   ├── JdbcDemo.java                 транзакція, PreparedStatement, batch і пагінація
+        │   │   ├── CrudDemo.java                 демонстрація in-memory CRUD (ЛР7–9)
+        │   │   └── InheritanceDemo.java          демонстрація наслідування (ЛР6)
         │   ├── db
         │   │   ├── DBConnection.java             Singleton з HikariCP
         │   │   └── DataAccessException.java
@@ -519,6 +521,7 @@ Singleton тут зберігає `HikariDataSource`, а не єдине `Connec
 | `model`     | ЛР2, ЛР6, ЛР10 | дані предметної області та сутності БД           |
 | `exception` | ЛР3, ЛР7–10 | власні винятки                                     |
 | `service`   | ЛР2, ЛР7–10 | in-memory та JDBC CRUD-сервіси                    |
+| `demo`      | ЛР6–10       | ізольовані демонстрації лабораторних робіт         |
 | `db`        | ЛР10        | Singleton-пул JDBC-з'єднань                       |
 | `ui`        | ЛР2–ЛР3     | введення даних                                     |
 | `discount`  | ЛР4         | інтерфейси, абстрактний клас, Strategy             |
