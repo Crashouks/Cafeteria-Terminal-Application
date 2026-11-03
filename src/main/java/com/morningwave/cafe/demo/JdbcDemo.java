@@ -1,4 +1,4 @@
-package com.morningwave.cafe;
+package com.morningwave.cafe.demo;
 
 import com.morningwave.cafe.db.DataAccessException;
 import com.morningwave.cafe.exception.EntityNotFoundException;

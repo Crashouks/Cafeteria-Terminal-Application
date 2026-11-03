@@ -37,6 +37,7 @@ public class MenuService {
             case HotDrink hot -> "гарячий напій, " + hot.getVolumeMl() + " мл, " + hot.getTemperatureC() + " °C";
             case Drink drink -> "напій, " + drink.getVolumeMl() + " мл";
             case Dessert dessert -> "десерт, " + dessert.getWeightG() + " г";
+            default -> throw new IllegalArgumentException("Невідомий тип позиції меню: " + item.getClass().getName());
         };
     }
 

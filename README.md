@@ -10,6 +10,7 @@
 * [Структура проєкту](#структура-проєкту)
 * [Запуск](#запуск)
 * [ЛР10: Maven та JDBC](#лр10-maven-та-jdbc)
+* [ЛР11: Hibernate ORM](#лр11-hibernate-orm)
 * [Робота з Git](#робота-з-git)
 
 ## Лабораторні роботи
@@ -24,6 +25,7 @@
 | ЛР6 | Ієрархія класів, наслідування, sealed              | `лр6-реалізація-ієрархії-класів-на-основі-принципів-наслідування` | виконано   |
 | ЛР7–9 | Типізований CRUD-сервіс: generics, колекції, сортування | `lr7-9/crud-service` | виконано   |
 | ЛР10 | Maven та реляційна БД через JDBC                    | `lr10/maven-jdbc` | виконано   |
+| ЛР11 | Hibernate ORM та Jakarta Persistence                 | `lr11/hibernate-orm` | виконано   |
 
 ---
 
@@ -378,13 +380,13 @@ classDiagram
 Чізкейк | Десерт | 85.0 грн | 380 ккал | 150 г  → порція: 150 г, легка: false
 --- Композиція: Combo має напій і десерт ---
 Комбо: Американо + Чізкейк (Знижка 10.0%) = 117.0 грн, 385 ккал
---- switch + pattern matching по sealed-ієрархії ---
+--- switch + pattern matching по ієрархії ---
 Американо: гарячий напій, 250 мл, 85 °C
 ```
 
 ### ЛР7–9. Типізований CRUD-сервіс: узагальнення, колекції, сортування
 
-Сутності — позиції меню (`Drink`/`HotDrink`, `Dessert`). `MenuItem` тепер наслідує `BaseEntity` (поля `long id` — незмінне, `String name`), тож один і той самий `InMemoryCrudService<T>` працює і з напоями, і з десертами без жодних змін. Демонстрація — `CrudDemo` (запускається з `Main` після блоку ЛР6 або окремо: `java -cp out com.morningwave.cafe.CrudDemo`).
+Сутності — позиції меню (`Drink`/`HotDrink`, `Dessert`). `MenuItem` наслідує `BaseEntity` (`long id`, `String name`), тож один `InMemoryCrudService<T>` працює і з напоями, і з десертами. Демонстрація запускається після блоку ЛР6 або окремо командою `mvn exec:java -Dexec.args="--crud-demo"`.
 
 | Тип | Призначення |
 |-----|-------------|
@@ -442,7 +444,7 @@ findAllSortedByNameAndByPrice() (два «Чай» різняться ціною
 Після сортування сховище не змінилося: (#1, #2, #3, #4 — порядок додавання)
 ```
 
-Конструктори сутностей тепер приймають `id` першим параметром (`new Drink(1, "Чай", 45, 2, 250)`).
+Конструктори сутностей тепер приймають `id` першим параметром (`new Drink(1, "Чай", 45, 2, 250)`). Початково `MenuItem` був `sealed`; у ЛР11 модифікатори `sealed` прибрано, щоб Hibernate міг створювати проксі. Деталі сумісності наведені в розділі ЛР11.
 
 ## ЛР10: Maven та JDBC
 
@@ -459,7 +461,7 @@ mvn compile
 mvn exec:java
 ```
 
-Файл БД створюється автоматично у `data/cafeteria.mv.db`. Налаштування за замовчуванням — у `src/main/resources/application.properties`; для іншої БД відредагуйте `db.url`, `db.username` і `db.password`, а також додайте JDBC-драйвер у `pom.xml`. Параметри можна перевизначити системними властивостями `app.db.url`, `app.db.username` і `app.db.password`. Для JDBC-демонстрації виконайте `mvn exec:java -Dexec.args="--jdbc-demo"`.
+Файл БД створюється автоматично у `data/cafeteria.mv.db`. Налаштування за замовчуванням — у `src/main/resources/application.properties`; для іншої БД відредагуйте `db.url`, `db.username` і `db.password`, а також додайте JDBC-драйвер у `pom.xml`. Параметри можна перевизначити системними властивостями `app.db.url`, `app.db.username` і `app.db.password`. Режими лабораторних запускаються однаково: `mvn exec:java -Dexec.args="--crud-demo"`, `--jdbc-demo`, `--hibernate-demo` або `--inheritance-demo`.
 
 #### JDBC-демонстрації
 
@@ -471,6 +473,27 @@ mvn exec:java
 #### Пул з'єднань замість одного спільного Connection
 
 Singleton тут зберігає `HikariDataSource`, а не єдине `Connection`: кожна операція отримує власне з'єднання з пулу й повертає його через try-with-resources. Один глобальний `Connection` був би небезпечним при паралельних запитах (перемішування операцій), при розриві з'єднання (потрібне відновлення) та під час одночасних транзакцій (спільний стан auto-commit/commit/rollback). Пул обмежує кількість фізичних з'єднань і видає окреме логічне з'єднання кожному виклику.
+
+## ЛР11: Hibernate ORM
+
+Hibernate 6 / Jakarta Persistence додає третю реалізацію `MenuItemService`: `JpaMenuItemService`. `JpaUtil` — Singleton для `EntityManagerFactory`; кожен `read` або `inTransaction` відкриває та закриває власний `EntityManager`. JDBC- та in-memory-сервіси лишаються доступними. Для запуску JPA-демо: `mvn exec:java -Dexec.args="--hibernate-demo"`.
+
+`META-INF/persistence.xml` задає `hbm2ddl.auto=validate`, `show_sql` та `format_sql`. Hibernate не створює й не змінює таблиці: звичайний старт спочатку запускає ідемпотентний `init.sql`, після чого JPA звіряє схему. Для `@GeneratedValue` схема має спільну послідовність `entity_seq`; існуючі таблиці та їхні колонки лишаються незмінними. Генеровані JPA-ідентифікатори призначаються з послідовності.
+
+`hibernate.globally_quoted_identifiers=true` зберігає lowercase-назви таблиць/колонок H2-схеми (`DATABASE_TO_UPPER=FALSE`) і дає змогу `validate` знайти їх без зміни попередньої DDL.
+
+Базові поля `id` і `name` винесені до `@MappedSuperclass BaseEntity`. `MenuItem` і `MenuItemNote` — сутності в таблицях попередньої роботи; підтипи меню зберігаються в `menu_items` за SINGLE_TABLE-дискримінатором `kind`.
+
+Зв'язок `MenuItem (1) ──< MenuItemNote (N)` двоспрямований. Власник — `MenuItemNote.menuItem` (`@ManyToOne`), бо саме ця сторона містить FK `menu_item_id`; `MenuItem.notes` — inverse side з `mappedBy="menuItem"`. `addNote`/`removeNote` синхронізують обидві сторони. Обидві навігації задані `LAZY`. Обрано `cascade=ALL` та `orphanRemoval=true`: нотатка є дочірнім описом позиції, не має самостійного життєвого циклу, тому збереження/видалення позиції поширюється на нотатки, а вилучення нотатки з колекції видаляє її запис.
+
+#### JPQL і типові проблеми
+
+* `findByName` використовує `where item.name = :name` та `setParameter("name", name)`; сортування за назвою/ціною виконує JPQL `ORDER BY`. Значення не конкатенуються в запит. `findPage` обмежує результати на рівні JPA.
+* **LazyInitializationException:** `findById` повертає сутність після закриття `EntityManager`; доступ до `getNotes()` після цього спричиняє виняток, бо колекція `LAZY` не завантажена. Демо відтворює цей випадок. Виправлення — `findByIdWithNotes`, що виконує `LEFT JOIN FETCH` і повертає завантажену колекцію.
+* **N+1:** звичайний запит списку, за яким у циклі читаються `item.getNotes()`, дає один SELECT для позицій і додатковий SELECT для кожної колекції. `countNotesWithNPlusOne()` демонструє цей шаблон; `countNotesWithFetchJoin()` замінює його одним `select distinct ... left join fetch ...`. Увімкнений SQL-лог показує різницю.
+* Щоб перевірити `validate`, тимчасово змініть `@Column(name="price")` на неіснуючу назву, запустіть `--hibernate-demo` і переконайтеся, що bootstrap завершується `Schema-validation: missing column`; поверніть правильну назву. Робоча схема не змінюється.
+
+Hibernate створює проксі для LAZY-зв'язків, тому `MenuItem` і `Drink` більше не `sealed`; `MenuService.details` явно відхиляє невідомий тип. Це технічна вимога проксування, інтерфейси CRUD та наявні підтипи лишаються без змін.
 
 ## Структура проєкту
 
@@ -484,43 +507,41 @@ Singleton тут зберігає `HikariDataSource`, а не єдине `Connec
 └── src
     └── main
         ├── java/com/morningwave/cafe
-        │   ├── Main.java                         точка входу, автоматична ініціалізація БД
-        │   ├── JdbcDemo.java                     транзакція, PreparedStatement, batch і пагінація
-        │   ├── CrudDemo.java                     демонстрація in-memory CRUD (ЛР7–9)
+        │   ├── Main.java                         запуск і вибір режиму
+        │   ├── demo
+        │   │   ├── InheritanceDemo.java          ієрархія класів (ЛР6)
+        │   │   ├── CrudDemo.java                 колекційний CRUD (ЛР7–9)
+        │   │   ├── JdbcDemo.java                 JDBC приклади (ЛР10)
+        │   │   └── JpaDemo.java                  Hibernate приклади (ЛР11)
         │   ├── db
-        │   │   ├── DBConnection.java             Singleton з HikariCP
+        │   │   ├── DBConnection.java             Singleton з пулом JDBC
+        │   │   ├── JpaUtil.java                  Singleton EntityManagerFactory
         │   │   └── DataAccessException.java
-        │   ├── model
-        │   │   ├── BaseEntity.java
-        │   │   ├── MenuItem.java
-        │   │   ├── MenuItemNote.java             друга сутність, FK до menu_items
-        │   │   └── ...                           інші моделі меню
-        │   ├── exception
-        │   │   └── ...                           винятки предметної області
-        │   ├── service
-        │   │   ├── CRUDService.java
-        │   │   ├── InMemoryCrudService.java
-        │   │   ├── AbstractJdbcCrudService.java  Template Method, спільний CRUD
-        │   │   ├── JdbcMenuItemService.java
-        │   │   └── JdbcMenuItemNoteService.java
+        │   ├── model                           сутності, ієрархія і композиція меню
+        │   ├── service                         контракти та реалізації CRUD
         │   ├── ui
-        │   ├── discount
-        │   ├── factory
-        │   ├── observer
-        │   ├── legacy
-        │   └── adapter
+        │   │   ├── ConsoleInput.java            введення та перевірка даних
+        │   │   └── ConsoleMenuApplication.java  інтерактивний сценарій
+        │   ├── exception                       винятки предметної області
+        │   ├── discount                        Strategy та розрахунок цін
+        │   ├── factory                         Factory Method
+        │   ├── observer                        Observer
+        │   ├── legacy                          приклад legacy API
+        │   └── adapter                         адаптер legacy API
         └── resources
             ├── application.properties            JDBC URL та облікові дані
-            └── init.sql                          ідемпотентна схема БД
+            ├── init.sql                          ідемпотентна схема БД
+            └── META-INF/persistence.xml          Jakarta Persistence unit
 ```
 
 | Пакет       | Лабораторна | Призначення                                        |
 |-------------|-------------|----------------------------------------------------|
-| `model`     | ЛР2, ЛР6, ЛР10 | дані предметної області та сутності БД           |
-| `exception` | ЛР3, ЛР7–10 | власні винятки                                     |
-| `service`   | ЛР2, ЛР7–10 | in-memory та JDBC CRUD-сервіси                    |
-| `db`        | ЛР10        | Singleton-пул JDBC-з'єднань                       |
-| `ui`        | ЛР2–ЛР3     | введення даних                                     |
+| `model`     | ЛР2, ЛР6, ЛР10–11 | дані предметної області та сутності БД        |
+| `exception` | ЛР3, ЛР7–11 | власні винятки                                     |
+| `service`   | ЛР2, ЛР7–11 | in-memory, JDBC та JPA CRUD-сервіси              |
+| `db`        | ЛР10–11     | Singleton пулу та EntityManagerFactory             |
+| `ui`        | ЛР2–ЛР3     | консольне введення та сценарій меню                |
+| `demo`      | ЛР6–11      | незалежні приклади лабораторних робіт              |
 | `discount`  | ЛР4         | інтерфейси, абстрактний клас, Strategy             |
 | `factory`   | ЛР5         | створення знижок                                   |
 | `observer`  | ЛР5         | інтерфейс спостерігача та спостерігачі             |

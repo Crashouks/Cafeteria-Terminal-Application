@@ -1,4 +1,4 @@
-package com.morningwave.cafe;
+package com.morningwave.cafe.demo;
 
 import com.morningwave.cafe.discount.PercentDiscount;
 import com.morningwave.cafe.exception.MenuException;
@@ -20,7 +20,7 @@ public class InheritanceDemo {
             demoStaticVsDynamicType(items);
             demoEquals();
             demoComposition(items);
-            demoSealedSwitch(items);
+            demoPatternMatchingSwitch(items);
         } catch (MenuException e) {
             System.out.println("Помилка демонстрації: " + e.getMessage());
         }
@@ -86,8 +86,8 @@ public class InheritanceDemo {
         System.out.println(combo);
     }
 
-    private static void demoSealedSwitch(MenuItem[] items) {
-        System.out.println("--- switch + pattern matching по sealed-ієрархії ---");
+    private static void demoPatternMatchingSwitch(MenuItem[] items) {
+        System.out.println("--- switch + pattern matching по ієрархії ---");
         for (MenuItem item : items) {
             System.out.println(item.getName() + ": " + MenuService.details(item));
         }

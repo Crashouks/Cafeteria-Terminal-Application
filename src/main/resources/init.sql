@@ -19,3 +19,5 @@ CREATE TABLE IF NOT EXISTS menu_item_notes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_menu_item_notes_menu_item_id ON menu_item_notes(menu_item_id);
+
+CREATE SEQUENCE IF NOT EXISTS entity_seq START WITH 10000000 INCREMENT BY 1;

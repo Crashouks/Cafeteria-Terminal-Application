@@ -1,13 +1,23 @@
 package com.morningwave.cafe.model;
 
 import com.morningwave.cafe.exception.MenuException;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 /** Напій: «напій є різновидом позиції меню». Не final, бо має підклас HotDrink. */
-public sealed class Drink extends MenuItem permits HotDrink {
+@Entity
+@DiscriminatorValue("DRINK")
+public class Drink extends MenuItem {
 
     public static final int DEFAULT_VOLUME_ML = 250;
 
-    private final int volumeMl;
+    @Column(name = "volume_ml")
+    private int volumeMl;
+
+    protected Drink() {
+        super();
+    }
 
     public Drink(long id, String name, double price, int calories, int volumeMl) throws MenuException {
         super(id, name, price, calories);

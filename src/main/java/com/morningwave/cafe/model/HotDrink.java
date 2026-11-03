@@ -1,17 +1,27 @@
 package com.morningwave.cafe.model;
 
 import com.morningwave.cafe.exception.MenuException;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 /**
  * Гарячий напій: третій рівень ієрархії MenuItem → Drink → HotDrink.
  * final: від гарячого напою спадкоємців не планується, а запечатана ієрархія
  * вимагає, щоб кожен дозволений підклас був final, sealed або non-sealed.
  */
+@Entity
+@DiscriminatorValue("HOT_DRINK")
 public final class HotDrink extends Drink {
 
     public static final int DEFAULT_TEMPERATURE_C = 80;
 
-    private final int temperatureC;
+    @Column(name = "temperature_c")
+    private int temperatureC;
+
+    protected HotDrink() {
+        super();
+    }
 
     public HotDrink(long id, String name, double price, int calories, int volumeMl, int temperatureC)
             throws MenuException {

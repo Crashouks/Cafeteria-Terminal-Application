@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 public class ConsoleInput {
 
-    private Scanner scanner;
+    private final Scanner scanner;
     private long nextId = 1;
 
     public ConsoleInput(Scanner scanner) {

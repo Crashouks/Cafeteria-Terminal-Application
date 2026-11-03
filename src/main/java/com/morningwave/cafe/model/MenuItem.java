@@ -3,6 +3,17 @@ package com.morningwave.cafe.model;
 import com.morningwave.cafe.exception.InvalidCaloriesException;
 import com.morningwave.cafe.exception.InvalidPriceException;
 import com.morningwave.cafe.exception.MenuException;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Базовий клас ієрархії меню. Абстрактний: «просто позиція меню» не існує —
@@ -11,13 +22,28 @@ import com.morningwave.cafe.exception.MenuException;
  * Раніше тип позиції визначався рядковим полем category ("Напій", "Десерт");
  * тепер тип — це сам клас, а категорію повертає абстрактний метод getCategory().
  */
-public abstract sealed class MenuItem extends BaseEntity permits Drink, Dessert {
+@Entity
+@Table(name = "menu_items")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "kind", discriminatorType = DiscriminatorType.STRING, length = 20)
+public abstract class MenuItem extends BaseEntity {
 
     /** Вмикає повідомлення в конструкторах (для демонстрації ланцюжка викликів). */
     private static boolean traceConstructors = false;
 
-    private final double price;
-    private final int calories;
+    @Column(name = "price", nullable = false)
+    private double price;
+
+    @Column(name = "calories", nullable = false)
+    private int calories;
+
+    @OneToMany(mappedBy = "menuItem", fetch = FetchType.LAZY, cascade = jakarta.persistence.CascadeType.ALL,
+            orphanRemoval = true)
+    private List<MenuItemNote> notes = new ArrayList<>();
+
+    protected MenuItem() {
+        price = 1;
+    }
 
     protected MenuItem(long id, String name, double price, int calories) throws MenuException {
         super(id, name);
@@ -48,6 +74,31 @@ public abstract sealed class MenuItem extends BaseEntity permits Drink, Dessert 
 
     public int getCalories() {
         return calories;
+    }
+
+    public List<MenuItemNote> getNotes() {
+        return List.copyOf(notes);
+    }
+
+    public void addNote(MenuItemNote note) {
+        MenuItem previousMenuItem = note.getMenuItem();
+        if (previousMenuItem != null && previousMenuItem != this) {
+            previousMenuItem.removeNote(note);
+        }
+        if (notes.stream().noneMatch(existing -> existing == note)) {
+            notes.add(note);
+            note.setMenuItem(this);
+        }
+    }
+
+    public void removeNote(MenuItemNote note) {
+        for (int i = 0; i < notes.size(); i++) {
+            if (notes.get(i) == note) {
+                notes.remove(i);
+                note.setMenuItem(null);
+                return;
+            }
+        }
     }
 
     /**
